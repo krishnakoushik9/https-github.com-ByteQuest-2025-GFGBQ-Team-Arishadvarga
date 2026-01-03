@@ -18,7 +18,7 @@
 
 ---
 
-> ⚠️ **Quick Note**: We apologize for the delayed submission in rounds 2 and 3. We spent extra time building a production-ready system with full Firebase integration and AI analysis capabilities rather than rushing a skeleton app. Quality over speed this time!
+> ⚠️ **Quick Note**: We apologize for the delayed submission in rounds 1 and 2. We spent extra time building a production-ready system with full Firebase integration and AI analysis capabilities rather than rushing a skeleton app. Quality over speed this time!
 
 ---
 
