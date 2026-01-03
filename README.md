@@ -162,4 +162,4 @@ MIT
 
 ---
 
-*Again, sorry for not being the fastest in rounds 2 and 3 — we were heads-down building something we're actually proud of. Hope you like it!* 🙏
+*Again, sorry for not being the fastest in rounds 1 and 2 — we were heads-down building something we're actually proud of. Hope you like it!* 🙏
