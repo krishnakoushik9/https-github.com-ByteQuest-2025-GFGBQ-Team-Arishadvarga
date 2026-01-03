@@ -1,9 +1,24 @@
 # CDSS - Clinical Decision Support System
 ### Team Arishadvarga | GFG ByteQuest 2025
 
+<br/>
+
+<div align="center">
+
+## 🚀 [**Try the Live Demo →**](https://cdss-bzgwrkva3-krishnakoushik9s-projects.vercel.app/)
+
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Click_Here-10b981?style=for-the-badge&logoColor=white)](https://cdss-bzgwrkva3-krishnakoushik9s-projects.vercel.app/)
+[![Next.js](https://img.shields.io/badge/Next.js_15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Gemini AI](https://img.shields.io/badge/Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+
+</div>
+
+<br/>
+
 ---
 
-> ⚠️ **Quick Note**: We apologize for the delayed submission in rounds 1 and 2. We spent extra time building a production-ready system with full Firebase integration and AI analysis capabilities rather than rushing a skeleton app. Quality over speed this time!
+> ⚠️ **Quick Note**: We apologize for the delayed submission in rounds 2 and 3. We spent extra time building a production-ready system with full Firebase integration and AI analysis capabilities rather than rushing a skeleton app. Quality over speed this time!
 
 ---
 
