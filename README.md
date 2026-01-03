@@ -1,36 +1,165 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CDSS - Clinical Decision Support System
+### Team Arishadvarga | GFG ByteQuest 2025
 
-## Getting Started
+---
 
-First, run the development server:
+> ⚠️ **Quick Note**: We apologize for the delayed submission in rounds 1 and 2. We spent extra time building a production-ready system with full Firebase integration and AI analysis capabilities rather than rushing a skeleton app. Quality over speed this time!
+
+---
+
+## What We Built
+
+A **real-time AI-powered clinical decision support system** that helps healthcare professionals with:
+
+- **Differential Diagnosis Generation** — AI analyzes patient symptoms, vitals, and history to suggest ranked diagnoses with confidence scores
+- **Red Flag Detection** — Automatic identification of urgent clinical concerns
+- **Test Recommendations** — Prioritized lab/imaging suggestions based on clinical picture
+- **Treatment Pathways** — Evidence-based treatment options with guideline references
+- **Case Persistence** — All cases saved to Firebase Firestore for review and audit
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 15, React 19, TypeScript |
+| Styling | Tailwind CSS + Custom Design System |
+| AI Engine | Google Gemini 2.0 Flash |
+| Database | Firebase Firestore |
+| Animations | Framer Motion |
+| Forms | React Hook Form + Zod |
+
+---
+
+## Quick Start
 
 ```bash
+# Clone the repo
+git clone https://github.com/krishnakoushik9/https-github.com-ByteQuest-2025-GFGBQ-Team-Arishadvarga.git
+cd cdss
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Add your GEMINI_API_KEY and Firebase config
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment Variables
 
-## Learn More
+Create a `.env.local` file:
 
-To learn more about Next.js, take a look at the following resources:
+```env
+GEMINI_API_KEY=your_gemini_api_key
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Features Breakdown
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1. Patient Assessment Workflow
+Multi-step form with:
+- Demographics intake (GDPR-compliant pseudonymized IDs)
+- Symptom entry (manual + AI NLP extraction)
+- Vital signs recording
+- Medical history
+- Lab results
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. AI Analysis Engine
+- Powered by Gemini 2.0 Flash
+- Returns structured JSON with:
+  - 3-7 differential diagnoses with confidence %
+  - Supporting/contradicting evidence
+  - Red flags with urgency levels
+  - Recommended tests
+  - Treatment pathways
+
+### 3. Firebase Integration
+- Real-time case saving
+- Dashboard shows live data from Firestore
+- Search and filter saved cases
+- Full audit trail
+
+### 4. UI/UX
+- Premium design with rounded components
+- Responsive layout
+- Smooth animations
+- Dark mode ready (system preference)
+
+---
+
+## Project Structure
+
+```
+cdss/
+├── src/
+│   ├── app/                 # Next.js pages
+│   │   ├── page.tsx         # Dashboard
+│   │   ├── assessment/      # Assessment workflow
+│   │   ├── cases/           # Saved cases
+│   │   └── api/             # API routes
+│   ├── components/          # UI components
+│   │   ├── ui/              # Base components
+│   │   ├── forms/           # Form components
+│   │   ├── medical/         # Medical-specific
+│   │   └── analysis/        # AI results display
+│   ├── lib/                 # Utilities
+│   │   ├── gemini.ts        # AI service
+│   │   ├── firebase.ts      # Firebase config
+│   │   └── db.ts            # Firestore operations
+│   └── types/               # TypeScript types
+└── public/
+```
+
+---
+
+## Screenshots
+
+*(run the app locally to see the full experience)*
+
+- **Dashboard** — Real-time stats from Firebase
+- **Assessment Flow** — 6-step patient intake
+- **AI Analysis** — Tabbed results with reasoning
+- **Cases Page** — Searchable saved cases
+
+---
+
+## Compliance
+
+- GDPR compliant (pseudonymized patient IDs)
+- HIPAA ready architecture
+- Full audit trail for all AI interactions
+- Medical disclaimer on all outputs
+
+---
+
+## Team
+
+**Team Arishadvarga**
+- Built with 💚 for GFG ByteQuest 2025
+
+---
+
+## License
+
+MIT
+
+---
+
+*Again, sorry for not being the fastest in rounds 2 and 3 — we were heads-down building something we're actually proud of. Hope you like it!* 🙏
