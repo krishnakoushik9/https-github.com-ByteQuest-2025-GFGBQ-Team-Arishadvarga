@@ -154,14 +154,17 @@ Please provide a comprehensive clinical analysis in the following JSON format:
 }
 
 IMPORTANT GUIDELINES:
-1. Provide 3-7 differential diagnoses ranked by clinical likelihood
+1. Provide 3-5 differential diagnoses ranked by clinical likelihood (be concise)
 2. Always include red flags if any concerning patterns are present
-3. Suggest relevant diagnostic tests to confirm or rule out conditions
+3. Suggest 3-5 relevant diagnostic tests to confirm or rule out conditions
 4. Reference clinical guidelines where applicable
 5. Be explicit about uncertainty and limitations
 6. Consider the patient's age, sex, and history in your analysis
 7. Prioritize patient safety - err on the side of caution for red flags
-8. For the Reasoning Graph, ensure steps flow logically: Symptom -> Finding -> Rule -> Diagnosis
+8. Keep descriptions BRIEF - one sentence each maximum
+9. Limit treatmentPathways to top 2-3 most relevant
+
+CRITICAL: Keep response under 8000 characters. Be concise.
 
 Respond ONLY with the JSON object, no additional text.`;
 
@@ -346,7 +349,38 @@ function parseAnalysisResponse(responseText: string, encounterId: string): Diagn
     cleanedText = cleanedText.trim();
 
     try {
-        const parsed = JSON.parse(cleanedText);
+        // Attempt to repair truncated JSON
+        let jsonToparse = cleanedText;
+
+        // If JSON is truncated, try to close it properly
+        if (!jsonToparse.endsWith('}')) {
+            console.warn('Detected truncated JSON response, attempting repair...');
+
+            // Find the last complete object/array
+            const openBraces = (jsonToparse.match(/{/g) || []).length;
+            const closeBraces = (jsonToparse.match(/}/g) || []).length;
+            const openBrackets = (jsonToparse.match(/\[/g) || []).length;
+            const closeBrackets = (jsonToparse.match(/]/g) || []).length;
+
+            // Try to truncate to last complete section and close
+            // Find the last complete array item or object
+            const lastCompleteComma = jsonToparse.lastIndexOf('},');
+            const lastCompleteBracket = jsonToparse.lastIndexOf(']');
+
+            if (lastCompleteComma > lastCompleteBracket && lastCompleteComma > 0) {
+                // Truncate after last complete object in array
+                jsonToparse = jsonToparse.substring(0, lastCompleteComma + 1);
+            }
+
+            // Close any open structures
+            const missingBrackets = openBrackets - (jsonToparse.match(/]/g) || []).length;
+            const missingBraces = openBraces - (jsonToparse.match(/}/g) || []).length;
+
+            jsonToparse += ']'.repeat(Math.max(0, missingBrackets));
+            jsonToparse += '}'.repeat(Math.max(0, missingBraces));
+        }
+
+        const parsed = JSON.parse(jsonToparse);
 
         // Transform and validate the response
         const analysis: DiagnosticAnalysis = {
