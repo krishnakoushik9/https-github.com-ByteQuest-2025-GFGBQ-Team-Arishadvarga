@@ -14,8 +14,12 @@ import {
     FileText,
     Clock,
     Shield,
+    Image as ImageIcon,
+    Download
 } from 'lucide-react';
 import type { DiagnosticAnalysis } from '@/types/medical';
+import { ClinicalVisualizer } from './ClinicalVisualizer';
+import { ReasoningGraph } from './ReasoningGraph';
 
 interface AnalysisResultsProps {
     analysis: DiagnosticAnalysis;
@@ -23,8 +27,9 @@ interface AnalysisResultsProps {
 }
 
 export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
-    const [activeTab, setActiveTab] = React.useState<'diagnoses' | 'tests' | 'treatment' | 'reasoning'>('diagnoses');
+    const [activeTab, setActiveTab] = React.useState<'diagnoses' | 'visuals' | 'tests' | 'treatment' | 'reasoning'>('diagnoses');
     const [disclaimerAccepted, setDisclaimerAccepted] = React.useState(false);
+    const [generatingPdf, setGeneratingPdf] = React.useState(false);
 
     if (!disclaimerAccepted) {
         return (
@@ -35,48 +40,155 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
         );
     }
 
+    const handleGenerateImage = async (type: 'anatomy' | 'heatmap' | 'progression' | 'cinematic', context: string) => {
+        const res = await fetch('/api/generate-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, context }),
+        });
+        const data = await res.json();
+        return data.image; // Base64
+    };
+
+    const [handoutData, setHandoutData] = React.useState<any>(null);
+
+    const handleGenerateHandout = async () => {
+        if (!analysis.differentialDiagnoses[0]) return;
+        setGeneratingPdf(true);
+        try {
+            const res = await fetch('/api/patient-handout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    diagnosis: analysis.differentialDiagnoses[0].condition,
+                    patientAge: "adult" // Can be passed from props if available
+                }),
+            });
+            const data = await res.json();
+            if (data.explanation) {
+                setHandoutData(data.explanation);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to generate handout");
+        } finally {
+            setGeneratingPdf(false);
+        }
+    };
+
+    const topDiagnosis = analysis.differentialDiagnoses[0];
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+            className="flex flex-col gap-6"
         >
+            {/* Handout Modal */}
+            {handoutData && (
+                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl relative">
+                        <button
+                            onClick={() => setHandoutData(null)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+                        >
+                            ✕
+                        </button>
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-bold text-slate-900">{handoutData.title}</h2>
+                            <p className="text-slate-500 mt-2">Patient Education Sheet</p>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-100">
+                                <h3 className="font-semibold text-emerald-900 mb-2">Summary</h3>
+                                <p className="text-emerald-800">{handoutData.summary}</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-slate-900 mb-2">What is happening?</h3>
+                                <p className="text-slate-600">{handoutData.whatHappens}</p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 className="font-semibold text-slate-900 mb-3">Do's</h3>
+                                    <ul className="space-y-2">
+                                        {handoutData.dosAndDonts?.do?.map((item: string, i: number) => (
+                                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                                                <span className="text-emerald-500 font-bold">✓</span> {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-900 mb-3">Don'ts</h3>
+                                    <ul className="space-y-2">
+                                        {handoutData.dosAndDonts?.dont?.map((item: string, i: number) => (
+                                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                                                <span className="text-red-500 font-bold">✕</span> {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="bg-red-50 p-6 rounded-xl border border-red-100">
+                                <h3 className="font-semibold text-red-900 flex items-center gap-2 mb-2">
+                                    <AlertTriangle size={18} /> When to Call a Doctor
+                                </h3>
+                                <p className="text-red-800">{handoutData.whenToCall}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setHandoutData(null)}>Close</Button>
+                            <Button onClick={() => window.print()}>Print / Save as PDF</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)' }}>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700">
                         <Brain size={24} color="#ffffff" />
                     </div>
                     <div>
-                        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>AI Clinical Analysis</h2>
-                        <p style={{ fontSize: '14px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-1">AI Clinical Analysis</h2>
+                        <p className="text-sm text-slate-500 flex items-center gap-2">
                             <Clock size={16} />
                             Analyzed at {new Date(analysis.analyzedAt).toLocaleString()}
-                            <span style={{ padding: '2px 8px', borderRadius: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}>
+                            <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-semibold text-slate-600">
                                 {analysis.modelVersion}
                             </span>
                         </p>
                     </div>
                 </div>
+                <Button variant="outline" onClick={handleGenerateHandout} disabled={generatingPdf}>
+                    <Download size={16} className="mr-2" />
+                    {generatingPdf ? 'Generating...' : 'Patient Handout'}
+                </Button>
             </div>
 
             {/* Red Flags Section - Always visible if present */}
             {analysis.redFlags.length > 0 && (
-                <div style={{ background: '#fef2f2', borderRadius: '16px', border: '1px solid #fecaca', padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <AlertTriangle size={20} color="#dc2626" />
-                        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#7f1d1d' }}>Clinical Red Flags</h3>
+                <div className="bg-red-50 rounded-2xl border border-red-200 p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle size={20} className="text-red-600" />
+                        <h3 className="text-lg font-semibold text-red-900">Clinical Red Flags</h3>
                     </div>
-                    <p style={{ fontSize: '14px', color: '#b91c1c', marginBottom: '16px' }}>
+                    <p className="text-sm text-red-700 mb-4">
                         {analysis.redFlags.length} potential concerns identified - requires clinical attention
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="flex flex-col gap-3">
                         {analysis.redFlags.map((flag) => (
-                            <div key={flag.id} style={{ display: 'flex', gap: '12px', padding: '16px', background: '#ffffff', borderRadius: '12px', border: '1px solid #fee2e2' }}>
-                                <AlertTriangle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div key={flag.id} className="flex gap-3 p-4 bg-white rounded-xl border border-red-100">
+                                <AlertTriangle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
                                 <div>
-                                    <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>{flag.description}</div>
-                                    <div style={{ fontSize: '14px', color: '#64748b' }}>
+                                    <div className="font-semibold text-slate-900 mb-1">{flag.description}</div>
+                                    <div className="text-sm text-slate-500">
                                         Action: {flag.recommendedAction} ({flag.severity.toUpperCase()})
                                     </div>
                                 </div>
@@ -87,9 +199,10 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
             )}
 
             {/* Tab Navigation */}
-            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', overflowX: 'auto' }}>
+            <div className="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
                 {[
                     { id: 'diagnoses', label: 'Differential Diagnosis', icon: Stethoscope, count: analysis.differentialDiagnoses.length },
+                    { id: 'visuals', label: 'Visual Analysis', icon: ImageIcon },
                     { id: 'tests', label: 'Suggested Tests', icon: TestTube, count: analysis.suggestedTests.length },
                     { id: 'treatment', label: 'Treatment Pathways', icon: FileText, count: analysis.treatmentPathways.length },
                     { id: 'reasoning', label: 'AI Reasoning', icon: Brain },
@@ -97,33 +210,15 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '10px 16px',
-                            borderRadius: '10px',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            border: 'none',
-                            cursor: 'pointer',
-                            background: activeTab === tab.id ? '#ecfdf5' : 'transparent',
-                            color: activeTab === tab.id ? '#047857' : '#475569',
-                            whiteSpace: 'nowrap',
-                            transition: 'all 0.2s',
-                        }}
+                        className={`
+                            flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+                            ${activeTab === tab.id ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}
+                        `}
                     >
                         <tab.icon size={16} />
                         {tab.label}
                         {tab.count !== undefined && (
-                            <span style={{
-                                padding: '2px 8px',
-                                borderRadius: '12px',
-                                background: activeTab === tab.id ? '#d1fae5' : '#f1f5f9',
-                                color: activeTab === tab.id ? '#047857' : '#64748b',
-                                fontSize: '12px',
-                                fontWeight: 700
-                            }}>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.id ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
                                 {tab.count}
                             </span>
                         )}
@@ -141,54 +236,47 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     transition={{ duration: 0.2 }}
                 >
                     {activeTab === 'diagnoses' && (
-                        <div style={{ display: 'grid', gap: '16px' }}>
+                        <div className="grid gap-4">
                             {analysis.differentialDiagnoses.map((dx) => (
                                 <Card key={dx.id} padding="lg">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                    <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>{dx.condition}</h3>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="text-lg font-bold text-slate-900">{dx.condition}</h3>
                                                 <Badge variant="info">{dx.probability}</Badge>
                                             </div>
-                                            <p style={{ color: '#475569', fontSize: '14px' }}>Rank #{dx.rank} • Confidence: {dx.confidenceScore}%</p>
+                                            <p className="text-sm text-slate-500">Rank #{dx.rank} • Confidence: {dx.confidenceScore}%</p>
                                         </div>
-                                        <div style={{
-                                            width: '64px',
-                                            height: '8px',
-                                            background: '#f1f5f9',
-                                            borderRadius: '4px',
-                                            overflow: 'hidden'
-                                        }}>
-                                            <div style={{
-                                                width: `${dx.confidenceScore}%`,
-                                                height: '100%',
-                                                background: dx.probability === 'high' ? '#10b981' : dx.probability === 'moderate' ? '#f59e0b' : '#94a3b8'
-                                            }} />
+                                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
+                                            <div
+                                                className={`h-full rounded-full ${dx.probability === 'high' ? 'bg-emerald-500' : dx.probability === 'moderate' ? 'bg-amber-500' : 'bg-slate-400'}`}
+                                                style={{ width: `${dx.confidenceScore}%` }}
+                                            />
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#059669', marginBottom: '8px' }}>Supported By</h4>
-                                            <ul style={{ listStyle: 'disc', paddingLeft: '20px', fontSize: '14px', color: '#334155' }}>
+                                            <h4 className="text-sm font-semibold text-emerald-600 mb-2">Supported By</h4>
+                                            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
                                                 {dx.supportingEvidence.map((ev, i) => (
                                                     <li key={i}>{ev.description}</li>
                                                 ))}
                                             </ul>
                                         </div>
                                         <div>
-                                            <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#dc2626', marginBottom: '8px' }}>Arguments Against</h4>
-                                            <ul style={{ listStyle: 'disc', paddingLeft: '20px', fontSize: '14px', color: '#334155' }}>
+                                            <h4 className="text-sm font-semibold text-red-600 mb-2">Arguments Against</h4>
+                                            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
                                                 {dx.contradictingEvidence.length > 0 ? (
                                                     dx.contradictingEvidence.map((ev, i) => <li key={i}>{ev.description}</li>)
                                                 ) : (
-                                                    <li style={{ color: '#94a3b8', fontStyle: 'italic' }}>None identified</li>
+                                                    <li className="text-slate-400 italic">None identified</li>
                                                 )}
                                             </ul>
                                         </div>
                                     </div>
                                     {dx.additionalConsiderations && (
-                                        <div style={{ marginTop: '16px', fontSize: '14px', color: '#64748b', fontStyle: 'italic' }}>
+                                        <div className="mt-4 text-sm text-slate-500 italic">
                                             Note: {dx.additionalConsiderations}
                                         </div>
                                     )}
@@ -197,25 +285,35 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                         </div>
                     )}
 
+                    {activeTab === 'visuals' && topDiagnosis && (
+                        <div className="space-y-6">
+                            <ClinicalVisualizer
+                                condition={topDiagnosis.condition}
+                                description={`Patient presentation of ${topDiagnosis.condition}`}
+                                onGenerate={handleGenerateImage}
+                            />
+                        </div>
+                    )}
+
                     {activeTab === 'tests' && (
-                        <div style={{ display: 'grid', gap: '16px' }}>
+                        <div className="grid gap-4">
                             {analysis.suggestedTests.map((test) => (
                                 <Card key={test.id} padding="lg">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                        <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>{test.testName}</h4>
+                                    <div className="flex justify-between mb-3">
+                                        <h4 className="font-semibold text-slate-900">{test.testName}</h4>
                                         <Badge variant={test.priority === 'stat' ? 'error' : test.priority === 'urgent' ? 'warning' : 'default'}>
                                             {test.priority.toUpperCase()}
                                         </Badge>
                                     </div>
-                                    <p style={{ fontSize: '14px', color: '#475569', marginBottom: '16px' }}>{test.rationale}</p>
-                                    <div style={{ display: 'flex', gap: '8px', fontSize: '12px' }}>
-                                        <div style={{ padding: '4px 8px', background: '#ecfdf5', color: '#047857', borderRadius: '6px' }}>
+                                    <p className="text-sm text-slate-500 mb-4">{test.rationale}</p>
+                                    <div className="flex gap-2 text-xs">
+                                        <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded">
                                             Category: {test.category}
-                                        </div>
+                                        </span>
                                         {test.expectedToRule.in.length > 0 && (
-                                            <div style={{ padding: '4px 8px', background: '#f0f9ff', color: '#0369a1', borderRadius: '6px' }}>
+                                            <span className="px-2 py-1 bg-sky-50 text-sky-700 rounded">
                                                 Check for: {test.expectedToRule.in.join(', ')}
-                                            </div>
+                                            </span>
                                         )}
                                     </div>
                                 </Card>
@@ -224,21 +322,21 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     )}
 
                     {activeTab === 'treatment' && (
-                        <div style={{ display: 'grid', gap: '16px' }}>
+                        <div className="grid gap-4">
                             {analysis.treatmentPathways.map((pathway) => (
                                 <Card key={pathway.id} padding="lg">
-                                    <div style={{ marginBottom: '12px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                            <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>{pathway.condition}</h4>
+                                    <div className="mb-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h4 className="font-semibold text-slate-900">{pathway.condition}</h4>
                                             <Badge variant="outline">{pathway.pathway}</Badge>
                                         </div>
-                                        <p style={{ fontSize: '14px', color: '#475569' }}>{pathway.description}</p>
+                                        <p className="text-sm text-slate-500">{pathway.description}</p>
                                     </div>
 
                                     {pathway.considerations.length > 0 && (
-                                        <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', fontSize: '14px', color: '#334155' }}>
+                                        <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600">
                                             <strong>Considerations:</strong>
-                                            <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginTop: '4px' }}>
+                                            <ul className="list-disc pl-5 mt-1 space-y-1">
                                                 {pathway.considerations.map((c, i) => <li key={i}>{c}</li>)}
                                             </ul>
                                         </div>
@@ -249,50 +347,13 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     )}
 
                     {activeTab === 'reasoning' && (
-                        <div style={{ display: 'grid', gap: '24px' }}>
+                        <div className="space-y-6">
                             <Card padding="lg">
-                                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', marginBottom: '16px' }}>Analysis Summary</h3>
-                                <p style={{ fontSize: '15px', lineHeight: '1.6', color: '#334155' }}>{analysis.reasoning.summaryText}</p>
+                                <h3 className="font-semibold text-slate-900 mb-4">Analysis Summary</h3>
+                                <p className="text-sm leading-relaxed text-slate-600">{analysis.reasoning.summaryText}</p>
                             </Card>
 
-                            <div style={{ position: 'relative', paddingLeft: '24px' }}>
-                                <div style={{ position: 'absolute', left: '11px', top: 0, bottom: 0, width: '2px', background: '#e2e8f0' }} />
-                                {analysis.reasoning.reasoningSteps.map((step) => (
-                                    <div key={step.step} style={{ marginBottom: '24px', position: 'relative' }}>
-                                        <div style={{
-                                            position: 'absolute',
-                                            left: '-24px',
-                                            width: '24px',
-                                            height: '24px',
-                                            borderRadius: '50%',
-                                            background: '#10b981',
-                                            color: '#fff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontSize: '12px',
-                                            fontWeight: 700,
-                                            border: '4px solid #f8fafc'
-                                        }}>
-                                            {step.step}
-                                        </div>
-                                        <Card padding="md">
-                                            <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Badge variant="outline">{step.category}</Badge>
-                                            </div>
-                                            <p style={{ fontSize: '14px', color: '#334155', marginBottom: '8px' }}>{step.description}</p>
-                                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#059669' }}>
-                                                → {step.conclusion}
-                                            </div>
-                                            {step.evidenceUsed.length > 0 && (
-                                                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                                                    Based on: {step.evidenceUsed.join(', ')}
-                                                </div>
-                                            )}
-                                        </Card>
-                                    </div>
-                                ))}
-                            </div>
+                            <ReasoningGraph reasoning={analysis.reasoning} />
                         </div>
                     )}
                 </motion.div>
@@ -318,50 +379,32 @@ function DisclaimerModal({
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 100,
-                padding: '16px'
-            }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                style={{
-                    background: '#ffffff',
-                    borderRadius: '16px',
-                    maxWidth: '560px',
-                    width: '100%',
-                    padding: '32px',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                }}
+                className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl"
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-                    <div style={{ padding: '12px', borderRadius: '12px', background: '#fef3c7' }}>
-                        <Shield size={32} color="#d97706" />
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 rounded-xl bg-amber-100">
+                        <Shield size={32} className="text-amber-600" />
                     </div>
                     <div>
-                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>Clinical Decision Support</h2>
-                        <p style={{ color: '#64748b' }}>Important Information</p>
+                        <h2 className="text-xl font-bold text-slate-900">Clinical Decision Support</h2>
+                        <p className="text-slate-500">Important Information</p>
                     </div>
                 </div>
 
-                <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px', marginBottom: '24px', maxHeight: '256px', overflowY: 'auto' }}>
-                    <p style={{ fontSize: '14px', color: '#334155', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                <div className="bg-slate-50 rounded-lg p-4 mb-6 max-h-64 overflow-y-auto">
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                         {disclaimer}
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px' }}>
-                    <Button onClick={onAccept} style={{ flex: 1 }}>
-                        I Understand - View Analysis
-                    </Button>
-                </div>
+                <Button onClick={onAccept} className="w-full">
+                    I Understand - View Analysis
+                </Button>
             </motion.div>
         </motion.div>
     );

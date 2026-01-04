@@ -20,7 +20,9 @@ import type {
 import { generateId, generateAuditId } from '@/lib/utils';
 
 // Gemini API Configuration
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const IMAGEN_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:generateContent';
+
 
 interface GeminiResponse {
     candidates: Array<{
@@ -137,7 +139,14 @@ Please provide a comprehensive clinical analysis in the following JSON format:
   "reasoning": {
     "summaryText": "Brief summary of clinical reasoning",
     "reasoningSteps": [
-      {"step": 1, "category": "Category", "description": "Step description", "evidenceUsed": ["Evidence"], "conclusion": "Step conclusion"}
+      {
+        "step": 1, 
+        "category": "Symptom Analysis|Rule Application|Risk Assessment", 
+        "description": "Description of reasoning", 
+        "evidenceUsed": ["list of evidence"], 
+        "conclusion": "step conclusion", 
+        "confidence": 0.9
+      }
     ],
     "limitations": ["Limitations of this analysis"],
     "uncertaintyFactors": ["Sources of uncertainty"]
@@ -152,6 +161,7 @@ IMPORTANT GUIDELINES:
 5. Be explicit about uncertainty and limitations
 6. Consider the patient's age, sex, and history in your analysis
 7. Prioritize patient safety - err on the side of caution for red flags
+8. For the Reasoning Graph, ensure steps flow logically: Symptom -> Finding -> Rule -> Diagnosis
 
 Respond ONLY with the JSON object, no additional text.`;
 
@@ -287,6 +297,38 @@ async function callGeminiAPI(prompt: string, apiKey: string): Promise<string> {
 }
 
 /**
+ * Call Imagen API for medical visualization
+ */
+async function callImagenAPI(prompt: string, apiKey: string): Promise<string> {
+    try {
+        const response = await fetch(`${IMAGEN_API_URL}?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                instances: [{ prompt }],
+                parameters: { sampleCount: 1, aspectRatio: "1:1" }
+            }),
+        });
+
+        if (!response.ok) {
+            console.warn('Imagen API failed, checking for error details...');
+            const txt = await response.text();
+            throw new Error(`Imagen API error: ${txt}`);
+        }
+
+        const data: any = await response.json();
+        // Check for predictions
+        const imageBase64 = data.predictions?.[0]?.bytesBase64Encoded || data.predictions?.[0];
+
+        if (!imageBase64) throw new Error('No image data returned');
+        return imageBase64;
+    } catch (e) {
+        console.error("Image generation failed:", e);
+        throw e;
+    }
+}
+
+/**
  * Parse Gemini response into structured analysis
  */
 function parseAnalysisResponse(responseText: string, encounterId: string): DiagnosticAnalysis {
@@ -368,6 +410,7 @@ function parseAnalysisResponse(responseText: string, encounterId: string): Diagn
                     description: s.description || '',
                     evidenceUsed: s.evidenceUsed || [],
                     conclusion: s.conclusion || '',
+                    confidence: s.confidence || 0.8
                 })),
                 dataSourcesUsed: [
                     { type: 'patient-input', description: 'Symptoms and chief complaint' },
@@ -382,7 +425,7 @@ function parseAnalysisResponse(responseText: string, encounterId: string): Diagn
                 ],
                 uncertaintyFactors: parsed.reasoning?.uncertaintyFactors || [],
             },
-            modelVersion: 'AI Engine v2.0',
+            modelVersion: 'AI Engine v2.0 (Gemini 2.0 Flash)',
             disclaimers: [MEDICAL_DISCLAIMER],
             auditTrail: [
                 {
@@ -531,5 +574,77 @@ export async function performChat(message: string, apiKey: string): Promise<stri
     } catch (error) {
         console.error('Chat error:', error);
         throw new Error('Failed to get response from AI');
+    }
+}
+
+/**
+ * Generate medical visualization using Imagen
+ */
+export async function generateMedicalImage(
+    type: 'anatomy' | 'heatmap' | 'progression' | 'cinematic',
+    context: string,
+    apiKey: string
+): Promise<string> {
+    let prompt = "";
+    const styleGuide = "Medical illustration, educational, non-diagnostic. No realistic scans, no gore, no patient identity. Clean, minimal, professional healthcare style. Soft gradients, muted medical color palette. White background.";
+
+    switch (type) {
+        case 'anatomy':
+            prompt = `Create a detailed anatomical illustration of ${context}. Highlight the affected area with a soft glow. ${styleGuide}`;
+            break;
+        case 'heatmap':
+            prompt = `Create a human body heatmap overlay showing symptom intensity for: ${context}. Use a schematic human outline (neutral gender). Red/Orange warmth indicates pain/inflammation. ${styleGuide}`;
+            break;
+        case 'progression':
+            prompt = `Create a comparative medical illustration showing the progression of ${context}. Left side: Early stage. Right side: Advanced stage. Label stages clearly. ${styleGuide}`;
+            break;
+        case 'cinematic':
+            prompt = `Create a sequential medical storytelling frame explaining the mechanism of ${context}. Focus on pathophysiology at a cellular or organ level. ${styleGuide}`;
+            break;
+    }
+
+    try {
+        return await callImagenAPI(prompt, apiKey);
+    } catch (e) {
+        console.error("Failed to generate image", e);
+        return ""; // Return empty string on failure to handle gracefully in UI
+    }
+}
+
+/**
+ * Generate patient-friendly explanation sheet
+ */
+export async function generatePatientExplanation(
+    diagnosis: string,
+    patientAge: string,
+    apiKey: string
+): Promise<{ text: string, sections: any[] }> {
+    const prompt = `Create a patient-friendly educational explanation for the condition: "${diagnosis}".
+    Target Audience: ${patientAge} year old patient.
+    
+    Structure the response as JSON:
+    {
+      "title": "Understanding [Condition]",
+      "summary": "Simple, jargon-free explanation (2-3 sentences)",
+      "whatHappens": "What is happening in the body",
+      "symptoms": ["List of key symptoms to watch"],
+      "dosAndDonts": {"do": ["..."], "dont": ["..."]},
+      "whenToCall": "Red flag symptoms requiring immediate attention"
+    }
+    
+    Tone: Reassuring, clear, professional.
+    Respond ONLY with JSON.`;
+
+    const response = await callGeminiAPI(prompt, apiKey);
+
+    try {
+        let cleanedText = response.trim();
+        if (cleanedText.startsWith('```json')) cleanedText = cleanedText.slice(7);
+        if (cleanedText.startsWith('```')) cleanedText = cleanedText.slice(3);
+        if (cleanedText.endsWith('```')) cleanedText = cleanedText.slice(0, -3);
+
+        return JSON.parse(cleanedText.trim());
+    } catch (e) {
+        return { text: "Failed to generate explanation.", sections: [] };
     }
 }

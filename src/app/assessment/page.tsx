@@ -10,6 +10,7 @@ import { LabResultsInput } from '@/components/forms/LabResultsInput';
 import { VitalSignsGrid } from '@/components/medical/VitalSigns';
 import { AnalysisResults } from '@/components/analysis/AnalysisResults';
 import { AnalysisLoading } from '@/components/analysis/AnalysisLoading';
+import { WhatIfSandbox } from '@/components/analysis/WhatIfSandbox';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { generateId } from '@/lib/utils';
@@ -414,12 +415,25 @@ export default function AssessmentPage() {
                                             <p style={{ color: '#64748b', marginBottom: '32px', maxWidth: '400px', marginInline: 'auto' }}>
                                                 Our AI engine will process the patient data to generate differential diagnoses and treatment suggestions.
                                             </p>
-                                            <Button size="lg" onClick={runAnalysis} leftIcon={<Brain size={20} />}>Run Clinical Analysis</Button>
+                                            <Button size="lg" onClick={() => runAnalysis()} leftIcon={<Brain size={20} />}>Run Clinical Analysis</Button>
                                         </div>
                                     ) : isAnalyzing ? (
-                                        <AnalysisLoading stage={analysisStage} error={analysisError || undefined} onRetry={runAnalysis} />
+                                        <AnalysisLoading stage={analysisStage} error={analysisError || undefined} onRetry={() => runAnalysis()} />
                                     ) : (
-                                        <AnalysisResults analysis={analysis!} />
+                                        <>
+                                            <div className="mb-6">
+                                                <WhatIfSandbox
+                                                    initialVitals={vitals}
+                                                    isSimulating={isAnalyzing}
+                                                    onSimulate={(newVitals: Partial<VitalSigns>) => {
+                                                        setVitals(newVitals);
+                                                        // use setTimeout to ensure state update before running
+                                                        setTimeout(() => runAnalysis(), 100);
+                                                    }}
+                                                />
+                                            </div>
+                                            <AnalysisResults analysis={analysis!} />
+                                        </>
                                     )}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <Button variant="secondary" onClick={goToPreviousStep} leftIcon={<ArrowLeft size={16} />}>Back</Button>

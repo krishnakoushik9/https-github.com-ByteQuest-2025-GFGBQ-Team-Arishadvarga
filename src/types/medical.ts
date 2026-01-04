@@ -279,6 +279,7 @@ export interface ReasoningStep {
     description: string;
     evidenceUsed: string[];
     conclusion: string;
+    confidence?: number;
 }
 
 export interface DataSource {

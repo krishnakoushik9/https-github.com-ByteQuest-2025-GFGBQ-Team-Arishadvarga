@@ -61,6 +61,18 @@ export function PatientIntakeForm({ onSubmit, initialData }: PatientIntakeFormPr
                 This system uses pseudonymized identifiers to protect patient privacy. No personally identifiable information (PII) is stored. All data processing complies with European healthcare regulations.
             </Alert>
 
+            <div className="flex justify-end mb-4">
+                <Button type="button" variant="outline" size="sm" onClick={() => {
+                    setValue('ageRange', '40-49');
+                    setValue('biologicalSex', 'male');
+                    setValue('heightCm', 180);
+                    setValue('weightKg', 85);
+                    setValue('consentGiven', true);
+                }}>
+                    Autofill Demo Data
+                </Button>
+            </div>
+
             <Card padding="none" className="overflow-hidden">
                 <div style={{ padding: '24px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
