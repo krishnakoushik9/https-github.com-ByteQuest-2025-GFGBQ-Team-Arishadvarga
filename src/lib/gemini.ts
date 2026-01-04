@@ -21,7 +21,7 @@ import { generateId, generateAuditId } from '@/lib/utils';
 
 // Gemini API Configuration
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-const IMAGEN_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:generateContent';
+const IMAGEN_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict';
 
 
 interface GeminiResponse {
