@@ -348,11 +348,14 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     )}
 
                     {activeTab === 'reasoning' && (
-                        <div className="space-y-6">
-                            <Card padding="lg">
-                                <h3 className="font-semibold text-slate-900 mb-4">Analysis Summary</h3>
-                                <p className="text-sm leading-relaxed text-slate-600">{analysis.reasoning.summaryText}</p>
-                            </Card>
+                        <div className="space-y-8">
+                            <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                                <h3 className="text-xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+                                    <div className="w-2 h-8 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-full" />
+                                    Analysis Summary
+                                </h3>
+                                <p className="text-base leading-relaxed text-slate-700">{analysis.reasoning.summaryText}</p>
+                            </div>
 
                             <ReasoningGraph reasoning={analysis.reasoning} />
                         </div>
