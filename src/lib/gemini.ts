@@ -502,7 +502,34 @@ Respond ONLY with the JSON array, no additional text.`;
             confidence: 0.85, // Default confidence for extracted symptoms
         }));
     } catch (error) {
-        console.error('Failed to parse symptoms:', error);
+        console.error('Symptom extraction error:', error);
         return [];
+    }
+}
+
+/**
+ * Perform general chat with Gemini
+ */
+export async function performChat(message: string, apiKey: string): Promise<string> {
+    const prompt = `
+        You are an expert AI medical assistant for a Clinical Decision Support System (CDSS).
+        
+        Your role is to assist healthcare professionals with general medical queries, differential diagnosis discussions, and treatment guidelines.
+        
+        Guidelines:
+        - Provide concise, evidence-based answers.
+        - Maintain a professional, clinical tone.
+        - If asked about specific patient data, strictly remind the user to use the "Assessment" feature for case analysis.
+        - Do not provide definitive medical advice or diagnosis; always suggest clinical verification.
+        
+        User Query: "${message}"
+    `;
+
+    try {
+        const responseText = await callGeminiAPI(prompt, apiKey);
+        return responseText;
+    } catch (error) {
+        console.error('Chat error:', error);
+        throw new Error('Failed to get response from AI');
     }
 }
