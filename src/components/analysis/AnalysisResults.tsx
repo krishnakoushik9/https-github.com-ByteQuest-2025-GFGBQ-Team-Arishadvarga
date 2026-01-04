@@ -30,6 +30,7 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
     const [activeTab, setActiveTab] = React.useState<'diagnoses' | 'visuals' | 'tests' | 'treatment' | 'reasoning'>('diagnoses');
     const [disclaimerAccepted, setDisclaimerAccepted] = React.useState(false);
     const [generatingPdf, setGeneratingPdf] = React.useState(false);
+    const [handoutData, setHandoutData] = React.useState<any>(null);
 
     if (!disclaimerAccepted) {
         return (
@@ -50,7 +51,7 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
         return data.image; // Base64
     };
 
-    const [handoutData, setHandoutData] = React.useState<any>(null);
+
 
     const handleGenerateHandout = async () => {
         if (!analysis.differentialDiagnoses[0]) return;
