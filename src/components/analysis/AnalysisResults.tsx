@@ -242,18 +242,18 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     transition={{ duration: 0.2 }}
                 >
                     {activeTab === 'diagnoses' && (
-                        <div className="grid gap-4">
+                        <div className="grid gap-6">
                             {analysis.differentialDiagnoses.map((dx) => (
-                                <Card key={dx.id} padding="lg">
-                                    <div className="flex justify-between items-start mb-4">
+                                <div key={dx.id} className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex justify-between items-start mb-6">
                                         <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="text-lg font-bold text-slate-900">{dx.condition}</h3>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-xl font-bold text-slate-900">{dx.condition}</h3>
                                                 <Badge variant="info">{dx.probability}</Badge>
                                             </div>
                                             <p className="text-sm text-slate-500">Rank #{dx.rank} • Confidence: {dx.confidenceScore}%</p>
                                         </div>
-                                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
+                                        <div className="w-20 h-3 bg-slate-100 rounded-full overflow-hidden mt-2">
                                             <div
                                                 className={`h-full rounded-full ${dx.probability === 'high' ? 'bg-emerald-500' : dx.probability === 'moderate' ? 'bg-amber-500' : 'bg-slate-400'}`}
                                                 style={{ width: `${dx.confidenceScore}%` }}
@@ -261,20 +261,20 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-emerald-600 mb-2">Supported By</h4>
-                                            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
+                                            <h4 className="text-sm font-bold text-emerald-700 mb-4">Supported By</h4>
+                                            <ul className="list-disc pl-5 text-sm text-slate-700 space-y-2">
                                                 {dx.supportingEvidence.map((ev, i) => (
-                                                    <li key={i}>{ev.description}</li>
+                                                    <li key={i} className="leading-relaxed">{ev.description}</li>
                                                 ))}
                                             </ul>
                                         </div>
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-red-600 mb-2">Arguments Against</h4>
-                                            <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
+                                        <div className="bg-red-50/50 rounded-xl p-5 border border-red-100">
+                                            <h4 className="text-sm font-bold text-red-700 mb-4">Arguments Against</h4>
+                                            <ul className="list-disc pl-5 text-sm text-slate-700 space-y-2">
                                                 {dx.contradictingEvidence.length > 0 ? (
-                                                    dx.contradictingEvidence.map((ev, i) => <li key={i}>{ev.description}</li>)
+                                                    dx.contradictingEvidence.map((ev, i) => <li key={i} className="leading-relaxed">{ev.description}</li>)
                                                 ) : (
                                                     <li className="text-slate-400 italic">None identified</li>
                                                 )}
@@ -282,11 +282,11 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                                         </div>
                                     </div>
                                     {dx.additionalConsiderations && (
-                                        <div className="mt-4 text-sm text-slate-500 italic">
-                                            Note: {dx.additionalConsiderations}
+                                        <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-100 text-sm text-amber-800 leading-relaxed">
+                                            <span className="font-semibold">Note:</span> {dx.additionalConsiderations}
                                         </div>
                                     )}
-                                </Card>
+                                </div>
                             ))}
                         </div>
                     )}
@@ -304,20 +304,20 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     {activeTab === 'tests' && (
                         <div className="grid gap-6">
                             {analysis.suggestedTests.map((test) => (
-                                <div key={test.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h4 className="font-bold text-lg text-slate-900 leading-snug pr-4">{test.testName}</h4>
+                                <div key={test.id} className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex justify-between items-start mb-5">
+                                        <h4 className="font-bold text-xl text-slate-900 leading-snug pr-4">{test.testName}</h4>
                                         <Badge variant={test.priority === 'stat' ? 'error' : test.priority === 'urgent' ? 'warning' : 'default'}>
                                             {test.priority.toUpperCase()}
                                         </Badge>
                                     </div>
-                                    <p className="text-sm text-slate-600 mb-5 leading-relaxed">{test.rationale}</p>
-                                    <div className="flex flex-wrap gap-3 text-xs">
-                                        <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg font-medium border border-emerald-100">
+                                    <p className="text-base text-slate-600 mb-6 leading-relaxed">{test.rationale}</p>
+                                    <div className="flex flex-wrap gap-3">
+                                        <span className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-medium border border-emerald-100">
                                             Category: {test.category}
                                         </span>
                                         {test.expectedToRule.in.length > 0 && (
-                                            <span className="px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg font-medium border border-sky-100">
+                                            <span className="px-4 py-2 bg-sky-50 text-sky-700 rounded-xl text-sm font-medium border border-sky-100">
                                                 Check for: {test.expectedToRule.in.join(', ')}
                                             </span>
                                         )}
@@ -330,19 +330,19 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     {activeTab === 'treatment' && (
                         <div className="grid gap-6">
                             {analysis.treatmentPathways.map((pathway) => (
-                                <div key={pathway.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="mb-5">
+                                <div key={pathway.id} className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="mb-6">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <h4 className="font-bold text-lg text-slate-900">{pathway.condition}</h4>
+                                            <h4 className="font-bold text-xl text-slate-900">{pathway.condition}</h4>
                                             <Badge variant="outline">{pathway.pathway}</Badge>
                                         </div>
-                                        <p className="text-sm text-slate-600 leading-relaxed">{pathway.description}</p>
+                                        <p className="text-base text-slate-600 leading-relaxed">{pathway.description}</p>
                                     </div>
 
                                     {pathway.considerations.length > 0 && (
-                                        <div className="bg-slate-50 p-5 rounded-xl text-sm text-slate-700 border border-slate-100">
+                                        <div className="bg-slate-50 p-6 rounded-xl text-base text-slate-700 border border-slate-100">
                                             <strong className="text-slate-800">Considerations:</strong>
-                                            <ul className="list-disc pl-5 mt-3 space-y-2">
+                                            <ul className="list-disc pl-5 mt-4 space-y-3">
                                                 {pathway.considerations.map((c, i) => <li key={i} className="leading-relaxed">{c}</li>)}
                                             </ul>
                                         </div>
