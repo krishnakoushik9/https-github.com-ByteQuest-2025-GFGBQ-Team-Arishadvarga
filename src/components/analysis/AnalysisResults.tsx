@@ -175,22 +175,27 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
 
             {/* Red Flags Section - Always visible if present */}
             {analysis.redFlags.length > 0 && (
-                <div className="bg-red-50 rounded-2xl border border-red-200 p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle size={20} className="text-red-600" />
-                        <h3 className="text-lg font-semibold text-red-900">Clinical Red Flags</h3>
+                <div className="bg-red-50 rounded-2xl border border-red-200 p-8">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-red-100 rounded-lg">
+                            <AlertTriangle size={22} className="text-red-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-red-900">Clinical Red Flags</h3>
                     </div>
-                    <p className="text-sm text-red-700 mb-4">
+                    <p className="text-sm text-red-700 mb-6">
                         {analysis.redFlags.length} potential concerns identified - requires clinical attention
                     </p>
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-5">
                         {analysis.redFlags.map((flag) => (
-                            <div key={flag.id} className="flex gap-3 p-4 bg-white rounded-xl border border-red-100">
-                                <AlertTriangle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+                            <div key={flag.id} className="flex gap-4 p-5 bg-white rounded-xl border border-red-100 shadow-sm">
+                                <AlertTriangle size={22} className="text-red-600 flex-shrink-0 mt-1" />
                                 <div>
-                                    <div className="font-semibold text-slate-900 mb-1">{flag.description}</div>
-                                    <div className="text-sm text-slate-500">
-                                        Action: {flag.recommendedAction} ({flag.severity.toUpperCase()})
+                                    <div className="font-semibold text-slate-900 mb-2 text-base leading-relaxed">{flag.description}</div>
+                                    <div className="text-sm text-slate-600">
+                                        <span className="font-medium">Action:</span> {flag.recommendedAction}
+                                        <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-bold">
+                                            {flag.severity.toUpperCase()}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -297,52 +302,52 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                     )}
 
                     {activeTab === 'tests' && (
-                        <div className="grid gap-4">
+                        <div className="grid gap-6">
                             {analysis.suggestedTests.map((test) => (
-                                <Card key={test.id} padding="lg">
-                                    <div className="flex justify-between mb-3">
-                                        <h4 className="font-semibold text-slate-900">{test.testName}</h4>
+                                <div key={test.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h4 className="font-bold text-lg text-slate-900 leading-snug pr-4">{test.testName}</h4>
                                         <Badge variant={test.priority === 'stat' ? 'error' : test.priority === 'urgent' ? 'warning' : 'default'}>
                                             {test.priority.toUpperCase()}
                                         </Badge>
                                     </div>
-                                    <p className="text-sm text-slate-500 mb-4">{test.rationale}</p>
-                                    <div className="flex gap-2 text-xs">
-                                        <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded">
+                                    <p className="text-sm text-slate-600 mb-5 leading-relaxed">{test.rationale}</p>
+                                    <div className="flex flex-wrap gap-3 text-xs">
+                                        <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg font-medium border border-emerald-100">
                                             Category: {test.category}
                                         </span>
                                         {test.expectedToRule.in.length > 0 && (
-                                            <span className="px-2 py-1 bg-sky-50 text-sky-700 rounded">
+                                            <span className="px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg font-medium border border-sky-100">
                                                 Check for: {test.expectedToRule.in.join(', ')}
                                             </span>
                                         )}
                                     </div>
-                                </Card>
+                                </div>
                             ))}
                         </div>
                     )}
 
                     {activeTab === 'treatment' && (
-                        <div className="grid gap-4">
+                        <div className="grid gap-6">
                             {analysis.treatmentPathways.map((pathway) => (
-                                <Card key={pathway.id} padding="lg">
-                                    <div className="mb-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h4 className="font-semibold text-slate-900">{pathway.condition}</h4>
+                                <div key={pathway.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="mb-5">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <h4 className="font-bold text-lg text-slate-900">{pathway.condition}</h4>
                                             <Badge variant="outline">{pathway.pathway}</Badge>
                                         </div>
-                                        <p className="text-sm text-slate-500">{pathway.description}</p>
+                                        <p className="text-sm text-slate-600 leading-relaxed">{pathway.description}</p>
                                     </div>
 
                                     {pathway.considerations.length > 0 && (
-                                        <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600">
-                                            <strong>Considerations:</strong>
-                                            <ul className="list-disc pl-5 mt-1 space-y-1">
-                                                {pathway.considerations.map((c, i) => <li key={i}>{c}</li>)}
+                                        <div className="bg-slate-50 p-5 rounded-xl text-sm text-slate-700 border border-slate-100">
+                                            <strong className="text-slate-800">Considerations:</strong>
+                                            <ul className="list-disc pl-5 mt-3 space-y-2">
+                                                {pathway.considerations.map((c, i) => <li key={i} className="leading-relaxed">{c}</li>)}
                                             </ul>
                                         </div>
                                     )}
-                                </Card>
+                                </div>
                             ))}
                         </div>
                     )}
