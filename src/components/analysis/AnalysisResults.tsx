@@ -262,28 +262,29 @@ export function AnalysisResults({ analysis, onClose }: AnalysisResultsProps) {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
-                                            <h4 className="text-sm font-bold text-emerald-700 mb-4">Supported By</h4>
-                                            <ul className="list-disc pl-5 text-sm text-slate-700 space-y-2">
+                                        <div className="bg-emerald-50/50 rounded-2xl p-8 border border-emerald-100">
+                                            <h4 className="text-base font-bold text-emerald-700 mb-4">Supported By</h4>
+                                            <ul className="list-disc pl-5 text-base text-slate-700 space-y-3">
                                                 {dx.supportingEvidence.map((ev, i) => (
-                                                    <li key={i} className="leading-relaxed">{ev.description}</li>
+                                                    <li key={i} className="leading-relaxed pl-1">{ev.description}</li>
                                                 ))}
                                             </ul>
                                         </div>
-                                        <div className="bg-red-50/50 rounded-xl p-5 border border-red-100">
-                                            <h4 className="text-sm font-bold text-red-700 mb-4">Arguments Against</h4>
-                                            <ul className="list-disc pl-5 text-sm text-slate-700 space-y-2">
+                                        <div className="bg-red-50/50 rounded-2xl p-8 border border-red-100">
+                                            <h4 className="text-base font-bold text-red-700 mb-4">Arguments Against</h4>
+                                            <ul className="list-disc pl-5 text-base text-slate-700 space-y-3">
                                                 {dx.contradictingEvidence.length > 0 ? (
-                                                    dx.contradictingEvidence.map((ev, i) => <li key={i} className="leading-relaxed">{ev.description}</li>)
+                                                    dx.contradictingEvidence.map((ev, i) => <li key={i} className="leading-relaxed pl-1">{ev.description}</li>)
                                                 ) : (
-                                                    <li className="text-slate-400 italic">None identified</li>
+                                                    <li className="text-slate-400 italic pl-1">None identified</li>
                                                 )}
                                             </ul>
                                         </div>
                                     </div>
                                     {dx.additionalConsiderations && (
-                                        <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-100 text-sm text-amber-800 leading-relaxed">
-                                            <span className="font-semibold">Note:</span> {dx.additionalConsiderations}
+                                        <div className="mt-6 p-6 bg-amber-50 rounded-2xl border border-amber-100 text-base text-amber-800 leading-relaxed">
+                                            <span className="font-bold mr-2">Note:</span>
+                                            {dx.additionalConsiderations}
                                         </div>
                                     )}
                                 </div>
